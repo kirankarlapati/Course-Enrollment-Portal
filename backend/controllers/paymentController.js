@@ -7,7 +7,7 @@ import Notification from '../models/Notification.js';
 // @access  Private
 export const checkEnrollment = async (req, res) => {
   try {
-    const { courseId } = req.body;
+    const { courseId, transactionId } = req.body;
 
     const enrollment = await Enrollment.findOne({
       user: req.user._id,
@@ -31,15 +31,16 @@ export const checkEnrollment = async (req, res) => {
       status: 'pending',
     });
 
-    // Create admin notification
+    // Create admin notification with transaction ID
     await Notification.create({
       title: 'New Enrollment Request',
-      message: `${req.user.name} (${req.user.email}) has submitted an enrollment request for ${course.title}`,
+      message: `${req.user.name} (${req.user.email}) has submitted an enrollment request for ${course.title}. Amount: ₹${course.price}`,
       type: 'enrollment',
       metadata: {
         enrollmentId: newEnrollment._id,
         userId: req.user._id,
         courseId: courseId,
+        transactionId: transactionId || 'N/A',
       },
     });
 
@@ -71,6 +72,24 @@ export const approveEnrollment = async (req, res) => {
       message: 'Enrollment approved successfully',
       enrollment,
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Check if user is already enrolled in a course
+// @route   GET /api/payment/is-enrolled/:courseId
+// @access  Private
+export const isEnrolled = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    
+    const enrollment = await Enrollment.findOne({
+      user: req.user._id,
+      course: courseId,
+    });
+
+    res.json({ enrolled: !!enrollment });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

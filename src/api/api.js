@@ -40,7 +40,8 @@ export const courseAPI = {
 
 // Payment APIs
 export const paymentAPI = {
-  checkEnrollment: (courseId) => api.post('/payment/check-enrollment', { courseId }),
+  checkEnrollment: (courseId, transactionId) => api.post('/payment/check-enrollment', { courseId, transactionId }),
+  isEnrolled: (courseId) => api.get(`/payment/is-enrolled/${courseId}`),
   approveEnrollment: (enrollmentId) => api.post('/payment/approve-enrollment', { enrollmentId }),
   getPaymentHistory: () => api.get('/payment/history'),
 };

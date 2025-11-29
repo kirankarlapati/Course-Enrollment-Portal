@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AppBar, Toolbar, Typography, Button, Box, IconButton, Badge, Drawer, List, ListItem, ListItemText, Menu, MenuItem, Avatar } from '@mui/material';
-import { Menu as MenuIcon, Notifications as NotificationsIcon, Google as GoogleIcon } from '@mui/icons-material';
+import { Menu as MenuIcon, Notifications as NotificationsIcon } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { adminAPI } from '../api/api';
@@ -135,15 +135,8 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <Button
-                  variant="outlined"
-                  color="inherit"
-                  startIcon={<GoogleIcon />}
-                  component={Link}
-                  to="/register"
-                  sx={{ borderColor: 'white' }}
-                >
-                  Sign up with Google
+                <Button color="inherit" component={Link} to="/register">
+                  Register
                 </Button>
                 <Button color="inherit" component={Link} to="/login">
                   Login

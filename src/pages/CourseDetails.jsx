@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Typography, Box, Button, Chip, Paper, Grid, Divider, Alert } from '@mui/material';
+import { Container, Typography, Box, Button, Chip, Paper, Grid, Divider, Alert, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
 import { Schedule, TrendingUp, CheckCircle } from '@mui/icons-material';
 import { courseAPI, paymentAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +14,14 @@ const CourseDetails = () => {
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
   const [alreadyEnrolled, setAlreadyEnrolled] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState({
+    studentName: user?.name || '',
+    email: user?.email || '',
+    courseId: '',
+    courseCost: '',
+    paymentId: '',
+  });
 
   useEffect(() => {
     fetchCourse();
@@ -35,47 +43,89 @@ const CourseDetails = () => {
 
   const checkEnrollment = async () => {
     try {
-      await paymentAPI.checkEnrollment(id);
-      setAlreadyEnrolled(true);
+      const { data } = await paymentAPI.isEnrolled(id);
+      setAlreadyEnrolled(data.enrolled);
     } catch (error) {
       setAlreadyEnrolled(false);
     }
   };
 
-  const handleEnroll = () => {
+  const handleEnrollClick = () => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
 
+    setPaymentDetails({
+      studentName: user.name,
+      email: user.email,
+      courseId: course._id,
+      courseCost: course.price.toString(),
+      paymentId: '', // Empty so user can fill it
+    });
+    setShowPaymentForm(true);
+  };
+
+  const handlePaymentSubmit = async () => {
+    // Validate transaction ID
+    if (!paymentDetails.paymentId || paymentDetails.paymentId.trim() === '') {
+      alert('Please enter the Transaction ID');
+      return;
+    }
+
     setEnrolling(true);
 
-    // Generate unique payment ID
-    const paymentId = `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    try {
+      // Create enrollment in database with transaction ID
+      await paymentAPI.checkEnrollment(course._id, paymentDetails.paymentId);
 
-    // Pre-fill Google Form with user and course data
-    const formBaseUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSccXSPYiKFgzXhvABjAEd6xL7v-vR_9I6L_oRjFmcdNVQhG0Q/viewform';
-    const params = new URLSearchParams({
-      'entry.1321953721': user.name,
-      'entry.1495610048': user.email,
-      'entry.521685589': course._id,
-      'entry.539822203': course.price.toString(),
-      'entry.186360880': paymentId,
-    });
+      // Open Google Form in new tab with pre-filled data
+      const formBaseUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSeSlfZ2veZowVfDYzg7VyZqLbNDLW445KJHwwCK6M6cJ4IFCQ/viewform';
+      const params = new URLSearchParams({
+        'entry.1321953721': paymentDetails.studentName,
+        'entry.1495610048': paymentDetails.email,
+        'entry.521685589': paymentDetails.courseId,
+        'entry.539822203': paymentDetails.courseCost,
+        'entry.186360880': paymentDetails.paymentId,
+      });
+      
+      // Open form in new tab
+      const formWindow = window.open(`${formBaseUrl}?${params.toString()}`, '_blank');
+      
+      if (!formWindow) {
+        alert('Please allow popups for this site to submit the payment form!');
+        setEnrolling(false);
+        return;
+      }
 
-    // Open Google Form in new tab
-    window.open(`${formBaseUrl}?${params.toString()}`, '_blank');
+      // Close modal
+      setShowPaymentForm(false);
 
-    // Navigate to success page
-    setTimeout(() => {
+      // Show instruction
+      alert('Please submit the Google Form that opened in the new tab to complete your enrollment!');
+
+      // Navigate to success page
       navigate('/payment-success', { 
         state: { 
           courseTitle: course.title,
-          paymentId 
+          paymentId: paymentDetails.paymentId,
+          paymentDetails: paymentDetails
         } 
       });
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || 'Enrollment failed';
+      
+      // If already enrolled error, update state and show friendly message
+      if (errorMsg.includes('Already enrolled') || errorMsg.includes('already enrolled') || errorMsg.includes('duplicate')) {
+        setAlreadyEnrolled(true);
+        setShowPaymentForm(false);
+        alert('You are already enrolled in this course! Check your dashboard to view your enrollments.');
+      } else {
+        alert(errorMsg);
+      }
+    } finally {
       setEnrolling(false);
-    }, 1000);
+    }
   };
 
   if (loading) {
@@ -135,11 +185,11 @@ const CourseDetails = () => {
                 variant="contained"
                 size="large"
                 fullWidth
-                onClick={handleEnroll}
-                disabled={enrolling || alreadyEnrolled}
+                onClick={handleEnrollClick}
+                disabled={alreadyEnrolled}
                 sx={{ mb: 1 }}
               >
-                {alreadyEnrolled ? 'Already Enrolled' : enrolling ? 'Processing...' : 'Enroll Now'}
+                {alreadyEnrolled ? 'Already Enrolled' : 'Enroll Now'}
               </Button>
               <Typography variant="caption" color="text.secondary">
                 30-day money-back guarantee
@@ -260,6 +310,67 @@ const CourseDetails = () => {
           )}
         </Grid>
       </Grid>
+
+      {/* Payment Details Form Dialog */}
+      <Dialog open={showPaymentForm} onClose={() => setShowPaymentForm(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Payment Details</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Please review your enrollment details. This information will be submitted for admin approval.
+          </Typography>
+          
+          <TextField
+            fullWidth
+            label="Student Name"
+            value={paymentDetails.studentName}
+            margin="normal"
+            disabled
+          />
+          <TextField
+            fullWidth
+            label="Email"
+            value={paymentDetails.email}
+            margin="normal"
+            disabled
+          />
+          <TextField
+            fullWidth
+            label="Course ID"
+            value={paymentDetails.courseId}
+            margin="normal"
+            disabled
+          />
+          <TextField
+            fullWidth
+            label="Course Cost"
+            value={`₹${paymentDetails.courseCost}`}
+            margin="normal"
+            disabled
+          />
+          <TextField
+            fullWidth
+            label="Transaction ID"
+            value={paymentDetails.paymentId}
+            onChange={(e) => setPaymentDetails({ ...paymentDetails, paymentId: e.target.value })}
+            margin="normal"
+            required
+            placeholder="Enter your payment transaction ID"
+            helperText="Enter the transaction ID from your payment (e.g., UPI, Card, etc.)"
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setShowPaymentForm(false)} disabled={enrolling}>
+            Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handlePaymentSubmit}
+            disabled={enrolling}
+          >
+            {enrolling ? 'Submitting...' : 'Submit Enrollment'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

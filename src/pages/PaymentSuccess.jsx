@@ -52,10 +52,10 @@ const PaymentSuccess = () => {
             <Assignment color="primary" />
             <Box>
               <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                2. Payment Verification
+                2. Payment Verification via Google Sheets
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Admin will verify your payment details from the Google Sheets
+                Admin will verify your transaction ID in Google Sheets and approve enrollment
               </Typography>
             </Box>
           </Box>

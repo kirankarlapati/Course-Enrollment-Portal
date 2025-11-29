@@ -79,16 +79,23 @@ const AdminDashboard = () => {
       {/* Instructions */}
       <Alert severity="info" sx={{ mb: 3 }}>
         <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-          Payment Verification Process:
+          Enrollment Approval Process:
         </Typography>
         <Typography variant="body2">
-          1. Check the Google Sheets for submitted enrollment forms: <a href="https://forms.gle/bUQ8NWPyki8HHVqs5" target="_blank" rel="noopener noreferrer">View Form Responses</a>
+          1. Check Google Sheets for payment details: 
+          <Button 
+            size="small" 
+            sx={{ ml: 1 }}
+            onClick={() => window.open('https://docs.google.com/spreadsheets/d/1P5zOHI0juBMf55pKV9zN0ZqcwXCLLRnXwjmb66vrigw/edit', '_blank')}
+          >
+            Open Sheets
+          </Button>
         </Typography>
         <Typography variant="body2">
-          2. Verify the payment details (Name, Email, Course ID, Amount, Payment ID)
+          2. Verify transaction ID and payment details in the spreadsheet
         </Typography>
         <Typography variant="body2">
-          3. Click "Approve Enrollment" below to grant access to the student
+          3. Return here and click "Approve Enrollment" to grant student access
         </Typography>
       </Alert>
 
@@ -152,7 +159,26 @@ const AdminDashboard = () => {
                     {notification.message}
                   </Typography>
 
-                  <Box sx={{ display: 'flex', gap: 1 }}>
+                  {notification.metadata?.transactionId && (
+                    <Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: '#FFF3E0', borderLeft: '4px solid #FF9800' }}>
+                      <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                        Transaction ID to verify in Google Sheets:
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 600, color: '#E65100' }}>
+                        {notification.metadata.transactionId}
+                      </Typography>
+                    </Paper>
+                  )}
+
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="info"
+                      onClick={() => window.open('https://docs.google.com/spreadsheets/d/1P5zOHI0juBMf55pKV9zN0ZqcwXCLLRnXwjmb66vrigw/edit', '_blank')}
+                    >
+                      Verify in Sheets
+                    </Button>
                     {notification.metadata?.enrollmentId && (
                       <Button
                         variant="contained"

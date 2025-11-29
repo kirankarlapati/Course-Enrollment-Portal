@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Container, Paper, TextField, Button, Typography, Box, Alert, Divider } from '@mui/material';
-import { Google as GoogleIcon } from '@mui/icons-material';
+import { Container, Paper, TextField, Button, Typography, Box, Alert } from '@mui/material';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -43,22 +42,6 @@ const Register = () => {
           </Typography>
 
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-          <Button
-            fullWidth
-            variant="outlined"
-            size="large"
-            startIcon={<GoogleIcon />}
-            sx={{ mb: 3, borderColor: '#1976D2', color: '#1976D2' }}
-          >
-            Sign up with Google
-          </Button>
-
-          <Divider sx={{ my: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              OR
-            </Typography>
-          </Divider>
 
           <form onSubmit={handleSubmit}>
             <TextField

@@ -80,18 +80,6 @@ const Login = () => {
               Sign up
             </Link>
           </Typography>
-
-          <Paper elevation={0} sx={{ mt: 3, p: 2, bgcolor: '#E3F2FD', borderRadius: 2 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              <strong>Demo Credentials:</strong>
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Student: john@example.com / password123
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Admin: admin@example.com / admin123
-            </Typography>
-          </Paper>
         </Paper>
       </Container>
     </Box>
