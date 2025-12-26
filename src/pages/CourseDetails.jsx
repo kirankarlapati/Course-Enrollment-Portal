@@ -77,39 +77,20 @@ const CourseDetails = () => {
 
     try {
       // Create enrollment in database with transaction ID
-      await paymentAPI.checkEnrollment(course._id, paymentDetails.paymentId);
-
-      // Open Google Form in new tab with pre-filled data
-      const formBaseUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSeSlfZ2veZowVfDYzg7VyZqLbNDLW445KJHwwCK6M6cJ4IFCQ/viewform';
-      const params = new URLSearchParams({
-        'entry.1321953721': paymentDetails.studentName,
-        'entry.1495610048': paymentDetails.email,
-        'entry.521685589': paymentDetails.courseId,
-        'entry.539822203': paymentDetails.courseCost,
-        'entry.186360880': paymentDetails.paymentId,
-      });
-      
-      // Open form in new tab
-      const formWindow = window.open(`${formBaseUrl}?${params.toString()}`, '_blank');
-      
-      if (!formWindow) {
-        alert('Please allow popups for this site to submit the payment form!');
-        setEnrolling(false);
-        return;
-      }
+      const response = await paymentAPI.checkEnrollment(course._id, paymentDetails.paymentId);
+      console.log('Enrollment created:', response.data);
 
       // Close modal
       setShowPaymentForm(false);
 
-      // Show instruction
-      alert('Please submit the Google Form that opened in the new tab to complete your enrollment!');
+      // Update local state
+      setAlreadyEnrolled(true);
 
       // Navigate to success page
       navigate('/payment-success', { 
         state: { 
           courseTitle: course.title,
-          paymentId: paymentDetails.paymentId,
-          paymentDetails: paymentDetails
+          paymentId: paymentDetails.paymentId
         } 
       });
     } catch (error) {
